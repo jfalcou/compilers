@@ -20,11 +20,14 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends software-p
       g++-10-powerpc-linux-gnu                                                                        \
       binutils-powerpc64-linux-gnu                                                                    \
       unzip tar gzip sudo                                                                             \
+      valgrind                                                                                        \
       python3 python3-defusedxml python3-lxml                                                         \
+      libboost-dev                                                                                    \
       libssl-dev libffi-dev ca-certificates wget &&                                                   \
       ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1        &&    \
       ln -sf /usr/arm-linux-gnueabi/libhf/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3          &&    \
       ln -sf /usr/powerpc64le-linux-gnu/lib64/ld64.so.2 /lib64/ld64.so.2                        &&    \
+      ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1 /lib64/ld64.so.1                          &&    \
       mkdir install && cd install                                                               &&    \
       wget https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3.tar.gz       &&    \
       tar -zxvf cmake-3.19.3.tar.gz  && cd cmake-3.19.3 && ./bootstrap                          &&    \
