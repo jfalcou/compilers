@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH            $PATH:/usr/local/bin
+ENV PATH            $PATH:/usr/local/bin:/opt/sde
 
 RUN   apt-get update -y && apt-get install -y --no-install-recommends software-properties-common &&   \
       add-apt-repository ppa:ubuntu-toolchain-r/test &&                                               \
@@ -20,7 +20,7 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends software-p
       g++-10-powerpc-linux-gnu                                                                        \
       binutils-powerpc64-linux-gnu                                                                    \
       unzip tar gzip sudo                                                                             \
-      valgrind                                                                                        \
+      valgrind  jq                                                                                    \
       python3 python3-defusedxml python3-lxml                                                         \
       libboost-dev                                                                                    \
       libssl-dev libffi-dev ca-certificates wget &&                                                   \
@@ -31,4 +31,7 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends software-p
       mkdir install && cd install                                                               &&    \
       wget https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3.tar.gz       &&    \
       tar -zxvf cmake-3.19.3.tar.gz  && cd cmake-3.19.3 && ./bootstrap                          &&    \
-      make && sudo make install
+      make && sudo make install && cd ..                                                        &&    \
+      wget https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.63.0-2021-01-18-lin.tar.bz2      &&    \
+      tar xf sde-external-8.63.0-2021-01-18-lin.tar.bz2 &&                                            \
+      cp -r sde-external-8.63.0-2021-01-18-lin /opt/sde
