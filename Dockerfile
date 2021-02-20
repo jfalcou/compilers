@@ -20,7 +20,7 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends software-p
       g++-10-powerpc-linux-gnu                                                                        \
       binutils-powerpc64-linux-gnu                                                                    \
       unzip tar gzip sudo                                                                             \
-      valgrind  jq                                                                                    \
+      valgrind  jq  gdb                                                                               \
       python3 python3-defusedxml python3-lxml                                                         \
       libssl-dev libffi-dev ca-certificates wget &&                                                   \
       ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1        &&    \
