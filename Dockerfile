@@ -43,6 +43,6 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends software-p
       wget https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3.tar.gz       &&    \
       tar -zxvf cmake-3.19.3.tar.gz  && cd cmake-3.19.3 && ./bootstrap                          &&    \
       make && sudo make install && cd ..                                                        &&    \
-      wget https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.gz            &&    \
+      wget https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz &&    \
       tar -zxvf boost_1_75_0.tar.gz  && cd boost_1_75_0                                         &&    \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install
