@@ -1,23 +1,32 @@
-FROM ubuntu:latest
+FROM ubuntu:devel
 
 ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
 ENV PATH            $PATH:/usr/local/bin:/opt/sde
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN   apt-get update -y && apt-get install -y --no-install-recommends software-properties-common &&   \
       add-apt-repository ppa:ubuntu-toolchain-r/test &&                                               \
-      apt-get update -y && apt-get install -y --no-install-recommends                                 \
+      apt-get update -y && apt-get -y install tzdata                                                  \
+      apt-get install -y --no-install-recommends                                                      \
       git openssh-server curl                                                                         \
       qemu qemu-user qemu-user-binfmt libc6-arm64-cross                                               \
-      gcc g++ g++-10 clang lld                                                                        \
-      gcc-10-multilib g++-10-multilib                                                                 \
-      build-essential cmake ninja-build nano                                                          \
-      g++-10-aarch64-linux-gnu                                                                        \
-      g++-10-arm-linux-gnueabihf                                                                      \
-      libstdc++-10-dev-arm64-cross                                                                    \
+      gcc g++ g++-11 clang lld                                                                        \
+      gcc-11-multilib g++-11-multilib                                                                 \
+      gcc-multilib g++-multilib                                                                       \
+      build-essential ninja-build nano                                                                \
+      g++-11-aarch64-linux-gnu                                                                        \
+      g++-aarch64-linux-gnu                                                                           \
+      g++-11-arm-linux-gnueabihf                                                                      \
+      g++-arm-linux-gnueabihf                                                                         \
+      libstdc++-11-dev-arm64-cross                                                                    \
+      libstdc++-dev-arm64-cross                                                                       \
       binutils-aarch64-linux-gnu                                                                      \
-      g++-10-powerpc64-linux-gnu                                                                      \
-      g++-10-powerpc64le-linux-gnu                                                                    \
-      g++-10-powerpc-linux-gnu                                                                        \
+      g++-11-powerpc64-linux-gnu                                                                      \
+      g++-11-powerpc64le-linux-gnu                                                                    \
+      g++-11-powerpc-linux-gnu                                                                        \
+      g++-powerpc64-linux-gnu                                                                         \
+      g++-powerpc64le-linux-gnu                                                                       \
+      g++-powerpc-linux-gnu                                                                           \
       binutils-powerpc64-linux-gnu                                                                    \
       unzip tar gzip sudo                                                                             \
       valgrind  jq  gdb                                                                               \
