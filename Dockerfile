@@ -15,21 +15,17 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       add-apt-repository deb http://apt.llvm.org/hirsute/ llvm-toolchain-hirsute main                 &&    \
       apt-get update -y                                                                               &&    \
       apt-get install -y --no-install-recommends                                                            \
-      unzip tar gzip                                                                                        \
+      less unzip tar gzip                                                                                   \
       python3 python3-defusedxml python3-lxml                                                               \
       build-essential ninja-build cmake git                                                                 \
       valgrind  jq  gdb                                                                                     \
       nano vim  clang-format-13                                                                             \
       qemu qemu-user qemu-user-binfmt libc6-arm64-cross                                                     \
-      g++-11                                                                                                \
-      gcc-11-multilib g++-11-multilib                                                                       \
-      gcc-10-multilib g++-10-multilib                                                                       \
-      g++-10-aarch64-linux-gnu      g++-11-aarch64-linux-gnu                                                \
-      g++-10-arm-linux-gnueabihf    g++-11-arm-linux-gnueabihf                                              \
+      g++-11 gcc-11-multilib g++-11-multilib                                                                \
+      g++-11-aarch64-linux-gnu g++-11-arm-linux-gnueabihf                                                   \
+      g++-11-powerpc64-linux-gnu                                                                            \
+      g++-11-powerpc64le-linux-gnu  g++-11-powerpc-linux-gnu                                                \
       binutils-aarch64-linux-gnu                                                                            \
-      g++-10-powerpc64-linux-gnu    g++-11-powerpc64-linux-gnu                                              \
-      g++-10-powerpc64le-linux-gnu  g++-11-powerpc64le-linux-gnu                                            \
-      g++-10-powerpc-linux-gnu      g++-11-powerpc-linux-gnu                                                \
       binutils-powerpc64-linux-gnu                                                                          \
       clang-12 lld                                                                                          \
       &&                                                                                                    \
@@ -43,4 +39,5 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       cp -r sde-external-8.63.0-2021-01-18-lin /opt/sde                                               &&    \
       wget ${BOOST_URL}                                                                               &&    \
       tar -zxvf boost_1_75_0.tar.gz  && cd boost_1_75_0                                               &&    \
-      ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..
+      ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..                                  &&    \
+      rm -rf install && rm -rf /var/lib/apt/lists/*
