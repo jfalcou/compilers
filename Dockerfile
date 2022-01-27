@@ -1,10 +1,13 @@
 FROM ubuntu:devel
 
 ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH            $PATH:/usr/local/bin:/opt/sde
+ENV PATH            /install/emsdk:/install/emsdk/upstream/emscripten:/install/emsdk/node/14.18.2_64bit/bin:/usr/local/bin:/opt/sde:$PATH
 ENV DEBIAN_FRONTEND noninteractive
 ENV INTEL_SDE_URL   https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
 ENV BOOST_URL       https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
+ENV EMSDK           /install/emsdk
+ENV EM_CONFIG       /install/emsdk/.emscripten
+ENV EMSDK_NODE      /install/emsdk/node/14.18.2_64bit/bin/node
 
 RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent debian-keyring              \
       software-properties-common apt-utils                                                            &&    \
@@ -40,4 +43,6 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       wget ${BOOST_URL}                                                                               &&    \
       tar -zxvf boost_1_75_0.tar.gz  && cd boost_1_75_0                                               &&    \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..                                  &&    \
+      git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                              &&    \
+      git pull && ./emsdk install latest  && ./emsdk activate latest                                  &&    \
       rm -rf install && rm -rf /var/lib/apt/lists/*
