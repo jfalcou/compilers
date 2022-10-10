@@ -1,4 +1,4 @@
-FROM ubuntu:devel
+FROM ubuntu:jammy
 
 ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
 ENV PATH            /install/emsdk:/install/emsdk/upstream/emscripten:/install/emsdk/node/14.18.2_64bit/bin:/usr/local/bin:/opt/sde:$PATH
@@ -15,34 +15,47 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       apt-get update -y                                                                               &&    \
       apt-get -y install sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates   &&    \
       wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -                         &&    \
-      add-apt-repository deb http://apt.llvm.org/hirsute/ llvm-toolchain-hirsute main                 &&    \
-      apt-get update -y                                                                               &&    \
-      apt-get install -y --no-install-recommends                                                            \
+      add-apt-repository deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-14 main                  &&    \
+      apt-get update -y
+
+RUN   apt-get install -y --no-install-recommends                                                            \
       less unzip tar gzip                                                                                   \
       python3 python3-defusedxml python3-lxml                                                               \
       build-essential ninja-build cmake git                                                                 \
       valgrind  jq  gdb                                                                                     \
-      nano vim                                                                                              \
-      qemu qemu-user qemu-user-binfmt libc6-arm64-cross                                                     \
-      g++-11 gcc-11-multilib g++-11-multilib                                                                \
-      g++-11-aarch64-linux-gnu g++-11-arm-linux-gnueabihf                                                   \
-      g++-11-powerpc64-linux-gnu                                                                            \
-      g++-11-powerpc64le-linux-gnu  g++-11-powerpc-linux-gnu                                                \
+      nano vim
+
+RUN   apt-get install -y --no-install-recommends                                                            \
+      qemu qemu-user qemu-user-binfmt libc6-arm64-cross
+
+RUN   apt-get install -y --no-install-recommends                                                            \
+      g++-12 gcc-12-multilib g++-12-multilib                                                                \
+      g++-12-aarch64-linux-gnu g++-12-arm-linux-gnueabihf                                                   \
+      g++-12-powerpc64-linux-gnu                                                                            \
+      g++-12-powerpc64le-linux-gnu  g++-12-powerpc-linux-gnu                                                \
       binutils-aarch64-linux-gnu                                                                            \
-      binutils-powerpc64-linux-gnu                                                                          \
-      libc++-14-dev libc++abi-14-dev clang clang-format lld                                                 \
-      &&                                                                                                    \
-      ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-aarch64.so.1          &&    \
-      ln -sf /usr/arm-linux-gnueabi/libhf/ld-linux-armhf.so.3     /lib/ld-linux-armhf.so.3            &&    \
+      binutils-powerpc64-linux-gnu
+
+RUN   apt-get install -y --no-install-recommends                                                            \
+      libc++-14-dev libc++abi-14-dev clang clang-format lld
+
+RUN   ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-aarch64.so.1          &&    \
+      ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3     /lib/ld-linux-armhf.so.3            &&    \
       ln -sf /usr/powerpc64le-linux-gnu/lib64/ld64.so.2           /lib64/ld64.so.2                    &&    \
-      ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1                    &&    \
-      mkdir install && cd install                                                                     &&    \
+      ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1
+
+RUN   mkdir install && cd install                                                                     &&    \
       curl ${INTEL_SDE_URL} --output sde.tar.bz2                                                      &&    \
       tar xf sde.tar.bz2                                                                              &&    \
-      cp -r sde-external-8.69.1-2021-07-18-lin /opt/sde                                               &&    \
-      wget ${BOOST_URL}                                                                               &&    \
+      cp -r sde-external-8.69.1-2021-07-18-lin /opt/sde
+
+RUN   cd install &&     wget ${BOOST_URL}                                                             &&    \
       tar -zxvf boost_1_75_0.tar.gz  && cd boost_1_75_0                                               &&    \
-      ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..                                  &&    \
-      git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                              &&    \
-      git pull && ./emsdk install latest  && ./emsdk activate latest                                  &&    \
-      rm -rf install && rm -rf /var/lib/apt/lists/*
+      ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..
+
+RUN   cd install && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                &&    \
+      git pull && ./emsdk install latest  && ./emsdk activate latest
+
+RUN  rm -rf /var/lib/apt/lists/*
+
+RUN git config --global --add safe.directory /github/workspace
