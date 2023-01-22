@@ -39,6 +39,8 @@ RUN   apt-get install -y --no-install-recommends                                
 RUN   apt-get install -y --no-install-recommends                                                            \
       libc++-14-dev libc++abi-14-dev clang clang-format lld
 
+RUN   apt-get install libopenmpi-dev libopenmpi3
+
 RUN   ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-aarch64.so.1          &&    \
       ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3     /lib/ld-linux-armhf.so.3            &&    \
       ln -sf /usr/powerpc64le-linux-gnu/lib64/ld64.so.2           /lib64/ld64.so.2                    &&    \
