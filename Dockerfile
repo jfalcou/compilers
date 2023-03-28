@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV INTEL_SDE_URL   https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
 ENV BOOST_URL       https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
 ENV DOXYGEN_URL     https://github.com/doxygen/doxygen/releases/download/Release_1_9_6/doxygen-1.9.6.linux.bin.tar.gz
+ENV VCPKG_URL       https://github.com/microsoft/vcpkg/archive/master.tar.gz
 ENV EMSDK           /install/emsdk
 ENV EM_CONFIG       /install/emsdk/.emscripten
 ENV EMSDK_NODE      /install/emsdk/node/14.18.2_64bit/bin/node
@@ -20,7 +21,7 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       apt-get update -y
 
 RUN   apt-get install -y --no-install-recommends                                                            \
-      less unzip tar gzip                                                                                   \
+      less unzip tar gzip zip tar                                                                           \
       python3 python3-defusedxml python3-lxml                                                               \
       build-essential ninja-build cmake git                                                                 \
       valgrind  jq  gdb                                                                                     \
@@ -59,8 +60,19 @@ RUN   cd install &&     wget ${BOOST_URL}                                       
 RUN   cd install && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                &&    \
       git pull && ./emsdk install latest  && ./emsdk activate latest  && cd ..
 
-RUN   cd install &&     wget ${DOXYGEN_URL}                                                             &&    \
+RUN   cd install &&     wget ${DOXYGEN_URL}                                                           &&    \
       tar -zxvf doxygen-1.9.6.linux.bin.tar.gz && cp doxygen-1.9.6/bin/* /usr/bin/
+
+RUN   cd install && wget -qO vcpkg.tar.gz ${VCPKG_URL}                                                &&    \
+      mkdir /opt/vcpkg && tar xf vcpkg.tar.gz --strip-components=1 -C /opt/vcpkg                      &&    \
+      /opt/vcpkg/bootstrap-vcpkg.sh && ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg
+
+RUN   cd install && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && pip install conan
+
+RUN   git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+RUN   echo ". /spack/share/spack/setup-env.sh" > ~/.bashrc                                            &&    \
+      . ~/.bashrc && spack install zlib gmake ncurses libiconv pkgconf berkeley-db                          \
+      ca-certificates-mozilla diffutils readline bzip2 gdbm perl openssl cmake
 
 RUN   apt clean && rm -rf install/* && rm -rf /var/lib/apt/lists/*
 RUN   git config --global --add safe.directory /github/workspace

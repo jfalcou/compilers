@@ -16,4 +16,6 @@ This dockerfile provides a Ubuntu Hirsute base with :
   - ninja
   - git
   - Doxygen 1.9.6
-  
+  - SPACK
+  - Conan
+  - VCPKG
