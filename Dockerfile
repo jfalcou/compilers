@@ -1,15 +1,15 @@
 FROM ubuntu:jammy
 
 ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH            /opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/14.18.2_64bit/bin:/usr/local/bin:/opt/sde:$PATH
+ENV PATH            /opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/15.14.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
 ENV DEBIAN_FRONTEND noninteractive
 ENV INTEL_SDE_URL   https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
 ENV BOOST_URL       https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
 ENV DOXYGEN_URL     https://github.com/doxygen/doxygen/releases/download/Release_1_9_6/doxygen-1.9.6.linux.bin.tar.gz
 ENV VCPKG_URL       https://github.com/microsoft/vcpkg/archive/master.tar.gz
-ENV EMSDK           /install/emsdk
-ENV EM_CONFIG       /install/emsdk/.emscripten
-ENV EMSDK_NODE      /install/emsdk/node/14.18.2_64bit/bin/node
+ENV EMSDK           /opt/wasm/emsdk
+ENV EM_CONFIG       /opt/wasm/emsdk/.emscripten
+ENV EMSDK_NODE      /opt/wasm/emsdk/node/15.14.0_64bit/bin/node
 
 RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent debian-keyring              \
       software-properties-common apt-utils                                                            &&    \
