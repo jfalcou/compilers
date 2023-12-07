@@ -6,8 +6,10 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV INTEL_SDE_URL   https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
 ENV BOOST_URL       https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
 ENV DOXYGEN_URL     https://github.com/doxygen/doxygen/releases/download/Release_1_9_6/doxygen-1.9.6.linux.bin.tar.gz
+ENV DOXYGEN_VERSION doxygen-1.9.6
 ENV VCPKG_URL       https://github.com/microsoft/vcpkg/archive/master.tar.gz
 ENV EMSDK           /opt/wasm/emsdk
+ENV EMSDK_VERSION   3.1.49
 ENV EM_CONFIG       /opt/wasm/emsdk/.emscripten
 ENV EMSDK_NODE      /opt/wasm/emsdk/node/15.14.0_64bit/bin/node
 
@@ -17,7 +19,7 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
       apt-get update -y                                                                               &&    \
       apt-get -y install sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates   &&    \
       wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -                         &&    \
-      add-apt-repository deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-14 main                  &&    \
+      add-apt-repository deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main                  &&    \
       apt-get update -y
 
 RUN   apt-get install -y --no-install-recommends                                                            \
@@ -39,7 +41,7 @@ RUN   apt-get install -y --no-install-recommends                                
       binutils-powerpc64-linux-gnu
 
 RUN   apt-get install -y --no-install-recommends                                                            \
-      libc++-14-dev libc++abi-14-dev clang clang-format lld libclang-rt-14-dev
+      libc++-15-dev libc++abi-15-dev clang-15 clang-format lld
 
 RUN   apt-get install -y --no-install-recommends libopenmpi-dev libopenmpi3
 
@@ -49,19 +51,15 @@ RUN   ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-
       ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1
 
 RUN   mkdir install && cd install                                                                     &&    \
-      curl ${INTEL_SDE_URL} --output sde.tar.bz2                                                      &&    \
-      tar xf sde.tar.bz2                                                                              &&    \
-      cp -r sde-external-8.69.1-2021-07-18-lin /opt/sde
-
-RUN   cd install &&     wget ${BOOST_URL}                                                             &&    \
+      wget ${BOOST_URL}                                                                               &&    \
       tar -zxvf boost_1_80_0.tar.gz  && cd boost_1_80_0                                               &&    \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..
 
-RUN   mkdir /opt/wasm && cd /opt/wasm && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                &&    \
-      git pull && ./emsdk install latest  && ./emsdk activate latest  && cd ..
+RUN   mkdir /opt/wasm && cd /opt/wasm && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk \
+      && git pull origin ${EMSDK_VERSION} && ./emsdk install latest  && ./emsdk activate latest  && cd ..
 
 RUN   cd install &&     wget ${DOXYGEN_URL}                                                           &&    \
-      tar -zxvf doxygen-1.9.6.linux.bin.tar.gz && cp doxygen-1.9.6/bin/* /usr/bin/
+      tar -zxvf ${DOXYGEN_VERSION}.linux.bin.tar.gz && cp ${DOXYGEN_VERSION}/bin/* /usr/bin/
 
 RUN   cd install && wget -qO vcpkg.tar.gz ${VCPKG_URL}                                                &&    \
       mkdir /opt/vcpkg && tar xf vcpkg.tar.gz --strip-components=1 -C /opt/vcpkg                      &&    \
@@ -76,3 +74,4 @@ RUN   echo ". /spack/share/spack/setup-env.sh" > ~/.bashrc                      
 
 RUN   apt clean && rm -rf install/* && rm -rf /var/lib/apt/lists/*
 RUN   git config --global --add safe.directory /github/workspace
+RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang
