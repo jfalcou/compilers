@@ -26,6 +26,7 @@ Those dockerfiles provide :
   - a ArchLinux base with :
     - g++
     - Intel DPC++
+    - python3
     - cmake
     - ninja
     - git

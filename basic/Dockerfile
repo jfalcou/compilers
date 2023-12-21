@@ -72,6 +72,6 @@ RUN   echo ". /spack/share/spack/setup-env.sh" > ~/.bashrc                      
       . ~/.bashrc && spack install zlib gmake ncurses libiconv pkgconf berkeley-db                          \
       ca-certificates-mozilla diffutils readline bzip2 gdbm perl openssl cmake
 
-RUN   apt clean && rm -rf install/* && rm -rf /var/lib/apt/lists/*
+RUN   apt clean && rm -rf /var/lib/apt/lists/*
 RUN   git config --global --add safe.directory /github/workspace
 RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang
