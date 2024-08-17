@@ -30,3 +30,7 @@ RUN   git clone https://github.com/jfalcou/eve.git && \
 
 RUN   apt clean && rm -rf /var/lib/apt/lists/*
 RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang
+
+RUN useradd --user-group --create-home --no-log-init --shell /bin/bash grayscott
+USER grayscott
+WORKDIR /home/grayscott
