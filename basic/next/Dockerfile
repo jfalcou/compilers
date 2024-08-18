@@ -38,7 +38,8 @@ RUN   apt-get install -y --no-install-recommends qemu-user qemu-user-binfmt libc
 RUN   apt-get install -y --no-install-recommends                                                                        \
       gcc-13-multilib g++-13-multilib                                                                                   \
       gcc-13-aarch64-linux-gnu gcc-13-arm-linux-gnueabihf                                                               \
-      g++-13-powerpc64-linux-gnu  g++-13-powerpc64le-linux-gnu
+      g++-13-powerpc64-linux-gnu  g++-13-powerpc64le-linux-gnu                                                          \
+      g++-13-riscv64-linux-gnu
 
 ## CLANG AND LLVM TOOLS
 RUN   wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc       &&  \
@@ -57,8 +58,8 @@ RUN   ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-
       ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1
 
 ## DOXYGEN
-RUN   cd install && wget ${DOXYGEN_URL}                                                                             &&  \
-      tar -zxvf ${DOXYGEN_VERSION}.linux.bin.tar.gz && cp ${DOXYGEN_VERSION}/bin/* /usr/bin/                        &&  \
+RUN   cd install && wget -nv ${DOXYGEN_URL}                                                                         &&  \
+      tar -zxf ${DOXYGEN_VERSION}.linux.bin.tar.gz && cp ${DOXYGEN_VERSION}/bin/* /usr/bin/                        &&  \
       cd ..
 
 ## EMSCRIPTEN
@@ -68,9 +69,15 @@ RUN   mkdir /opt/wasm && cd /opt/wasm                                           
       ./emsdk install latest  && ./emsdk activate latest                                                            &&  \
       cd ..
 
+## SETUP INTEL SDE
+RUN   cd install && curl https://downloadmirror.intel.com/823664/sde-external-9.38.0-2024-04-18-lin.tar.xz -o sde.tar.xz                                                            &&  \
+      tar xf sde.tar.xz                                                                                            &&  \
+      cp -r sde-external-9.38.0-2024-04-18-lin /opt/sde && \
+      cd ..
+
 ## SETUP BOOST
-RUN   cd install && wget ${BOOST_URL}                                                                               &&  \
-      tar -zxvf boost_1_80_0.tar.gz  && cd boost_1_80_0                                                             &&  \
+RUN   cd install && wget -nv ${BOOST_URL}                                                                           &&  \
+      tar -zxf boost_1_80_0.tar.gz  && cd boost_1_80_0                                                              &&  \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install                                                         &&  \
       cd ..
 
@@ -79,6 +86,7 @@ RUN    git config --global --add safe.directory /github/workspace
 
 ## CLEANUP
 RUN   apt clean && rm -rf /var/lib/apt/lists/*                                                                      &&  \
+      rm -rf install${INTEL_SDE_URL}                                                                                &&  \
       rm -rf install/boost_1_80_0.tar.gz                                                                            &&  \
       rm -rf install/boost_1_80_0/                                                                                  &&  \
       rm -rf install/${DOXYGEN_VERSION}.linux.bin.tar.gz                                                            &&  \
