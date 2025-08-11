@@ -4,10 +4,9 @@ ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr
 ENV PATH            /opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/16.20.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
 ENV DEBIAN_FRONTEND noninteractive
 ENV INTEL_SDE_URL   https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
-ENV BOOST_URL       https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+ENV BOOST_URL       https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
 ENV DOXYGEN_URL     https://github.com/doxygen/doxygen/releases/download/Release_1_9_6/doxygen-1.9.6.linux.bin.tar.gz
 ENV DOXYGEN_VERSION doxygen-1.9.6
-ENV VCPKG_URL       https://github.com/microsoft/vcpkg/archive/master.tar.gz
 ENV EMSDK           /opt/wasm/emsdk
 ENV EMSDK_VERSION   3.1.49
 ENV EM_CONFIG       /opt/wasm/emsdk/.emscripten
@@ -26,7 +25,7 @@ RUN   apt-get install -y --no-install-recommends                                
       less unzip tar gzip zip tar                                                                           \
       python3 python3-defusedxml python3-lxml                                                               \
       build-essential ninja-build cmake git                                                                 \
-      valgrind  jq  gdb                                                                                     \
+      valgrind  jq  gdb lcov                                                                                \
       nano vim
 
 RUN   apt-get install -y --no-install-recommends                                                            \
@@ -52,7 +51,7 @@ RUN   ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-
 
 RUN   mkdir install && cd install                                                                     &&    \
       wget ${BOOST_URL}                                                                               &&    \
-      tar -zxvf boost_1_80_0.tar.gz  && cd boost_1_80_0                                               &&    \
+      tar -zxvf boost_1_87_0.tar.gz  && cd boost_1_87_0                                               &&    \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install && cd ..
 
 RUN   mkdir /opt/wasm && cd /opt/wasm && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk \
@@ -61,17 +60,9 @@ RUN   mkdir /opt/wasm && cd /opt/wasm && git clone https://github.com/emscripten
 RUN   cd install &&     wget ${DOXYGEN_URL}                                                           &&    \
       tar -zxvf ${DOXYGEN_VERSION}.linux.bin.tar.gz && cp ${DOXYGEN_VERSION}/bin/* /usr/bin/
 
-RUN   cd install && wget -qO vcpkg.tar.gz ${VCPKG_URL}                                                &&    \
-      mkdir /opt/vcpkg && tar xf vcpkg.tar.gz --strip-components=1 -C /opt/vcpkg                      &&    \
-      /opt/vcpkg/bootstrap-vcpkg.sh && ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg
-
-RUN   cd install && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && pip install conan
-
-RUN   git clone -c feature.manyFiles=true https://github.com/spack/spack.git
-RUN   echo ". /spack/share/spack/setup-env.sh" > ~/.bashrc                                            &&    \
-      . ~/.bashrc && spack install zlib gmake ncurses libiconv pkgconf berkeley-db                          \
-      ca-certificates-mozilla diffutils readline bzip2 gdbm perl openssl cmake
+RUN   apt-get install -y --no-install-recommends llvm-15
 
 RUN   apt clean && rm -rf /var/lib/apt/lists/*
 RUN   git config --global --add safe.directory /github/workspace
-RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang
+RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang 
+RUN   ln -s /usr/bin/llvm-cov-15 /usr/bin/llvm-cov && ln -s /usr/bin/llvm-profdata-15 /usr/bin/llvm-profdata

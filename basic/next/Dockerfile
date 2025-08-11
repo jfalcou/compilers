@@ -45,7 +45,7 @@ RUN   apt-get install -y --no-install-recommends                                
 RUN   wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc       &&  \
       add-apt-repository deb http://apt.llvm.org/mantic/ llvm-toolchain-mantic-18 main                              &&  \
       apt-get update -y                                                                                             &&  \
-      apt-get install -y --no-install-recommends libc++-18-dev libc++abi-18-dev clang-18 clang-format lld           &&  \
+      apt-get install -y --no-install-recommends libc++-18-dev libc++abi-18-dev clang-18 clang-format lld llvm      &&  \
       ln -s /usr/bin/clang++-18 /usr/bin/clang++ && ln -s /usr/bin/clang-18 /usr/bin/clang
 
 ### MPI
