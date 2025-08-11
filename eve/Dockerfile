@@ -1,8 +1,8 @@
-FROM ubuntu:jammy
+FROM ubuntu:latest
 
-ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH            /opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/16.20.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
-ENV DEBIAN_FRONTEND noninteractive
+ENV LD_LIBRARY_PATH=/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
+ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/16.20.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent debian-keyring              \
       software-properties-common apt-utils                                                            &&    \
@@ -16,10 +16,16 @@ RUN   apt-get update -y && apt-get install -y --no-install-recommends gpg-agent 
 RUN   apt-get install -y --no-install-recommends                                                            \
       less unzip tar gzip zip tar build-essential ninja-build cmake git gdb nano vim
 
-RUN   apt-get install -y --no-install-recommends g++-12
+## G++ COMPILERS
+RUN   apt-get install -y --no-install-recommends                                                                        \
+      g++-14 gcc-14-multilib g++-14-multilib                                                                            \
+      g++-14-aarch64-linux-gnu g++-14-arm-linux-gnueabihf                                                               \
+      g++-14-powerpc64-linux-gnu  g++-14-powerpc64le-linux-gnu                                                          \
+      g++-14-riscv64-linux-gnu
 
-RUN   apt-get install -y --no-install-recommends                                                            \
-      libc++-15-dev libc++abi-15-dev clang-15 clang-format lld
+## CLANG AND LLVM TOOLS
+RUN   apt-get install -y --no-install-recommends libc++-19-dev libc++abi-19-dev clang-19 clang-format lld llvm      &&  \
+      ln -s /usr/bin/clang++-19 /usr/bin/clang++ && ln -s /usr/bin/clang-19 /usr/bin/clang
 
 RUN   git clone https://github.com/jfalcou/eve.git && \
       cd eve && \
@@ -29,8 +35,12 @@ RUN   git clone https://github.com/jfalcou/eve.git && \
       make install
 
 RUN   apt clean && rm -rf /var/lib/apt/lists/*
-RUN   ln -s /usr/bin/clang++-15 /usr/bin/clang++ && ln -s /usr/bin/clang-15 /usr/bin/clang
 
 RUN useradd --user-group --create-home --no-log-init --shell /bin/bash grayscott
 USER grayscott
 WORKDIR /home/grayscott
+
+COPY basic.cpp /home/grayscott/basic.cpp
+COPY math.cpp /home/grayscott/math.cpp
+COPY stencil.cpp /home/grayscott/stencil.cpp
+COPY stencil2.cpp /home/grayscott/stencil2.cpp
