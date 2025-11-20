@@ -1,25 +1,18 @@
-FROM ubuntu:latest
+FROM ubuntu:questing
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV LD_LIBRARY_PATH /usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH            /opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/20.18.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LD_LIBRARY_PATH=/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
+ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/20.18.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
 
 ## BOOST CONFIG
-ENV BOOST_URL       https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
-ENV BOOST_TAG       boost_1_87_0
+ENV BOOST_URL=https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz
+ENV BOOST_TAG=boost_1_87_0
 
 ## EMSCRIPTEN CONFIG
-ENV EMSDK           /opt/wasm/emsdk
-ENV EMSDK_VERSION   4.0.5
-ENV EM_CONFIG       /opt/wasm/emsdk/.emscripten
-ENV EMSDK_NODE      /opt/wasm/emsdk/node/20.18.0_64bit/bin/node
-
-## SETUP APT
-RUN   mkdir install                                                                                                 &&  \
-      apt-get update -y                                                                                             &&  \
-      apt-get install -y --no-install-recommends                                                                        \
-      gpg-agent debian-keyring software-properties-common apt-utils                                                 &&  \
-      add-apt-repository ppa:ubuntu-toolchain-r/test
+ENV EMSDK=/opt/wasm/emsdk
+ENV EMSDK_VERSION=4.0.5
+ENV EM_CONFIG=/opt/wasm/emsdk/.emscripten
+ENV EMSDK_NODE=/opt/wasm/emsdk/node/20.18.0_64bit/bin/node
 
 ## INSTALL BASE TOOLS
 RUN   apt-get update -y                                                                                             &&  \
@@ -38,12 +31,13 @@ RUN   apt-get install -y --no-install-recommends                                
 ## CLANG AND LLVM TOOLS
 RUN   apt-get install -y --no-install-recommends libc++-19-dev libc++abi-19-dev clang-19 clang-format lld llvm      &&  \
       ln -s /usr/bin/clang++-19 /usr/bin/clang++ && ln -s /usr/bin/clang-19 /usr/bin/clang
+RUN   apt-get install -y --no-install-recommends libc++-20-dev libc++abi-20-dev clang-20
 
 ## MPI
-RUN   apt-get install -y --no-install-recommends libopenmpi-dev libopenmpi3
+RUN   apt-get install -y --no-install-recommends libopenmpi-dev libopenmpi40
 
 ## SETUP BOOST
-RUN   cd install && wget -nv ${BOOST_URL}                                                                           &&  \
+RUN   mkdir install && cd install && wget -nv ${BOOST_URL}                                                          &&  \
       tar -zxf ${BOOST_TAG}.tar.gz  && cd ${BOOST_TAG}                                                              &&  \
       ./bootstrap.sh --prefix=/usr/ && ./b2 && ./b2 install                                                         &&  \
       cd ..
