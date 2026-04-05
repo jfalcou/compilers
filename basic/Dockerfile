@@ -1,14 +1,6 @@
 FROM ubuntu:questing
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV LD_LIBRARY_PATH=/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/20.18.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
-
-## EMSCRIPTEN CONFIG
-ENV EMSDK=/opt/wasm/emsdk
-ENV EMSDK_VERSION=4.0.5
-ENV EM_CONFIG=/opt/wasm/emsdk/.emscripten
-ENV EMSDK_NODE=/opt/wasm/emsdk/node/20.18.0_64bit/bin/node
 
 ## INSTALL BASE TOOLS
 RUN   apt-get update -y                                                                                             &&  \
@@ -35,11 +27,21 @@ RUN   apt-get update -y                                                         
 ## MAKE SAFE FOR GIT
 RUN    git config --global --add safe.directory /github/workspace
 
+# SETUP PATH
+ENV LD_LIBRARY_PATH=/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
+ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/22.16.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
+
+## EMSCRIPTEN CONFIG
+ENV EMSDK=/opt/wasm/emsdk
+ENV EMSDK_VERSION=5.0.5
+ENV EM_CONFIG=/opt/wasm/emsdk/.emscripten
+ENV EMSDK_NODE=/opt/wasm/emsdk/node/22.16.0_64bit/bin/node
+
 ## SETUP OTHER TOOLS
 RUN   mkdir install && cd install                                                                                   &&  \
-      curl https://downloadmirror.intel.com/823664/sde-external-9.38.0-2024-04-18-lin.tar.xz -o sde.tar.xz          &&  \
+      curl https://downloadmirror.intel.com/915934/sde-external-10.8.0-2026-03-15-lin.tar.xz -o sde.tar.xz          &&  \
       tar xf sde.tar.xz                                                                                             &&  \
-      cp -r sde-external-9.38.0-2024-04-18-lin /opt/sde                                                             &&  \
+      cp -r sde-external-10.8.0-2026-03-15-lin /opt/sde                                                             &&  \
       cd .. && rm -rf install                                                                                       &&  \
       mkdir /opt/wasm && cd /opt/wasm                                                                               &&  \
       git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                                            &&  \
