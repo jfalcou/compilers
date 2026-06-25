@@ -41,5 +41,6 @@ WORKDIR /home/grayscott
 
 COPY basic.cpp /home/grayscott/basic.cpp
 COPY math.cpp /home/grayscott/math.cpp
-COPY stencil.cpp /home/grayscott/stencil.cpp
-COPY stencil2.cpp /home/grayscott/stencil2.cpp
+COPY hypot.cpp /home/grayscott/hypot.cpp
+COPY bilateral.cpp /home/grayscott/bilateral.cpp
+COPY gray_scott.cpp /home/grayscott/gray_scott.cpp
