@@ -58,3 +58,10 @@ RUN   mkdir install && cd install                                               
       tar xzf doxygen-1.16.1.linux.bin.tar.gz                                                                       &&  \
       cp doxygen-1.16.1/bin/doxygen /usr/local/bin/                                                                 &&  \
       rm -rf doxygen-1.16.1*
+
+## SMOKE TEST
+## Fails the build rather than shipping a toolchain that cannot run. The ENV above is applied
+## here, so a PATH pointing at a node that is not there stops the image on the spot.
+RUN   node --version                                                                                                &&  \
+      emcc --version | head -1                                                                                      &&  \
+      gcovr --version | head -1
