@@ -2,6 +2,9 @@ FROM ubuntu:questing
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+## LINK THE PACKAGE BACK TO ITS SOURCES SO GHCR GRANTS THIS REPO WRITE ACCESS
+LABEL org.opencontainers.image.source="https://github.com/jfalcou/compilers"
+
 ## INSTALL BASE TOOLS
 RUN   apt-get update -y                                                                                             &&  \
       apt-get install -y --no-install-recommends                                                                        \
