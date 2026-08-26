@@ -6,14 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN   apt-get update -y                                                                                             &&  \
       apt-get install -y --no-install-recommends                                                                        \
       sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates                                        \
-      less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov                                   &&  \
+      less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov gcovr                             &&  \
       apt-get install -y --no-install-recommends g++-14 gcc-14-multilib g++-14-multilib                                 \
       g++-14-aarch64-linux-gnu g++-14-arm-linux-gnueabihf                                                               \
-      g++-14-powerpc64-linux-gnu  g++-14-powerpc64le-linux-gnu                                                          \
-      g++-14-riscv64-linux-gnu                                                                                      &&  \
+      g++-14-riscv64-linux-gnu g++-14-powerpc64-linux-gnu  g++-14-powerpc64le-linux-gnu                             &&  \
+      apt-get install -y --no-install-recommends libmpfrc++-dev libmpfr-dev libgmp-dev                              &&  \
       apt-get install -y --no-install-recommends libc++-19-dev libc++abi-19-dev clang-19 clang-format lld llvm      &&  \
       apt-get install -y --no-install-recommends libc++-20-dev libc++abi-20-dev clang-20                            &&  \
-      apt-get install -y --no-install-recommends libclang-rt-19-dev libclang-rt-20-dev                              &&  \
+      apt-get install -y --no-install-recommends libc++-21-dev libc++abi-21-dev clang-21                            &&  \
+      apt-get install -y --no-install-recommends libclang-rt-19-dev libclang-rt-20-dev libclang-rt-21-dev           &&  \
       apt-get install -y --no-install-recommends libopenmpi-dev libopenmpi40                                            \
       qemu-user qemu-user-binfmt libc6-arm64-cross libboost-dev                                                     &&  \
       apt clean && rm -rf /var/lib/apt/lists/*                                                                      &&  \
@@ -23,6 +24,8 @@ RUN   apt-get update -y                                                         
       ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1                                  &&  \
       ln -s /usr/bin/clang++-19                                   /usr/bin/clang++                                  &&  \
       ln -s /usr/bin/clang-19                                     /usr/bin/clang
+
+
 
 ## MAKE SAFE FOR GIT
 RUN    git config --global --add safe.directory /github/workspace
