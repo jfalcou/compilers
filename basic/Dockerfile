@@ -35,13 +35,13 @@ RUN    git config --global --add safe.directory /github/workspace
 
 # SETUP PATH
 ENV LD_LIBRARY_PATH=/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/
-ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/22.16.0_64bit/bin:/usr/local/bin:/opt/sde:$PATH
+ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/node/current/bin:/usr/local/bin:/opt/sde:$PATH
 
 ## EMSCRIPTEN CONFIG
 ENV EMSDK=/opt/wasm/emsdk
 ENV EMSDK_VERSION=5.0.5
 ENV EM_CONFIG=/opt/wasm/emsdk/.emscripten
-ENV EMSDK_NODE=/opt/wasm/emsdk/node/22.16.0_64bit/bin/node
+ENV EMSDK_NODE=/opt/wasm/emsdk/node/current/bin/node
 
 ## SETUP OTHER TOOLS
 RUN   mkdir install && cd install                                                                                   &&  \
@@ -52,7 +52,8 @@ RUN   mkdir install && cd install                                               
       mkdir /opt/wasm && cd /opt/wasm                                                                               &&  \
       git clone https://github.com/emscripten-core/emsdk.git && cd emsdk                                            &&  \
       git pull origin ${EMSDK_VERSION}                                                                              &&  \
-      ./emsdk install latest  && ./emsdk activate latest                                                            &&  \
+      ./emsdk install ${EMSDK_VERSION} && ./emsdk activate ${EMSDK_VERSION}                                         &&  \
+      ln -sfn "$(ls -d /opt/wasm/emsdk/node/*_64bit | head -1)" /opt/wasm/emsdk/node/current                        &&  \
       wget https://github.com/doxygen/doxygen/releases/download/Release_1_16_1/doxygen-1.16.1.linux.bin.tar.gz      &&  \
       tar xzf doxygen-1.16.1.linux.bin.tar.gz                                                                       &&  \
       cp doxygen-1.16.1/bin/doxygen /usr/local/bin/                                                                 &&  \
