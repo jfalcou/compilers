@@ -1,15 +1,27 @@
-FROM ubuntu:questing
+##======================================================================================================================
+##  Multi-Arch C++ & WebAssembly Development Environment
+##
+##  Four independent stages so BuildKit can fetch the tools while the toolchain installs, and so a change to one does
+##  not invalidate the others. Everything the final image keeps arrives through COPY --link.
+##======================================================================================================================
+# syntax=docker/dockerfile:1.7
+
+ARG EMSDK_VERSION=5.0.5
+ARG DOXYGEN_VERSION=1.16.1
+ARG DOXYGEN_SHA256=a56f885d37e3aae08a99f638d17bbb381224c03a878d9e2dda4f9fa4baf1d8bd
+
+##======================================================================================================================
+## COMPILERS AND CROSS-TOOLCHAINS - the long pole, ~5 minutes
+##======================================================================================================================
+FROM ubuntu:questing AS toolchains
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-## LINK THE PACKAGE BACK TO ITS SOURCES SO GHCR GRANTS THIS REPO WRITE ACCESS
-LABEL org.opencontainers.image.source="https://github.com/jfalcou/compilers"
-
-## INSTALL BASE TOOLS
 RUN   apt-get update -y                                                                                             &&  \
       apt-get install -y --no-install-recommends                                                                        \
       sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates                                        \
-      less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov "gcovr=7.*"                       &&  \
+      less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov "gcovr=7.*"                            \
+      python3                                                                                                       &&  \
       apt-get install -y --no-install-recommends g++-14 gcc-14-multilib g++-14-multilib                                 \
       g++-14-aarch64-linux-gnu g++-14-arm-linux-gnueabihf                                                               \
       g++-14-riscv64-linux-gnu g++-14-powerpc64-linux-gnu  g++-14-powerpc64le-linux-gnu                             &&  \
@@ -28,7 +40,55 @@ RUN   apt-get update -y                                                         
       ln -s /usr/bin/clang++-19                                   /usr/bin/clang++                                  &&  \
       ln -s /usr/bin/clang-19                                     /usr/bin/clang
 
+##======================================================================================================================
+## EMSCRIPTEN SDK - built aside, only /opt/wasm reaches the final image
+##======================================================================================================================
+FROM ubuntu:questing AS emsdk
 
+ARG EMSDK_VERSION
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN   apt-get update -y                                                                                             &&  \
+      apt-get install -y --no-install-recommends git python3 ca-certificates xz-utils                               &&  \
+      rm -rf /var/lib/apt/lists/*
+
+## Cloning the tag pins the SDK. Resolving node through a version-free symlink is what keeps ENV EMSDK_NODE valid:
+## the SDK picks its own node version, and spelling one out is what broke every wasm job on 2026-08-26.
+RUN   mkdir /opt/wasm && cd /opt/wasm                                                                               &&  \
+      git clone --depth 1 --branch "${EMSDK_VERSION}" https://github.com/emscripten-core/emsdk.git                  &&  \
+      cd emsdk                                                                                                      &&  \
+      ./emsdk install "${EMSDK_VERSION}" && ./emsdk activate "${EMSDK_VERSION}"                                     &&  \
+      ln -sfn "$(ls -d /opt/wasm/emsdk/node/*_64bit | head -1)" /opt/wasm/emsdk/node/current
+
+##======================================================================================================================
+## DOXYGEN - a single binary, fetched by pinned version and verified before it is unpacked
+##======================================================================================================================
+FROM ubuntu:questing AS doxygen
+
+ARG DOXYGEN_VERSION
+ARG DOXYGEN_SHA256
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN   apt-get update -y                                                                                             &&  \
+      apt-get install -y --no-install-recommends wget ca-certificates                                               &&  \
+      rm -rf /var/lib/apt/lists/*
+
+RUN   DOXYGEN_TAG=Release_$(echo "${DOXYGEN_VERSION}" | tr . _)                                                     &&  \
+      cd /tmp                                                                                                       &&  \
+      wget -q "https://github.com/doxygen/doxygen/releases/download/${DOXYGEN_TAG}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" && \
+      echo "${DOXYGEN_SHA256}  doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" | sha256sum -c -                        &&  \
+      tar xzf "doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz"                                                         &&  \
+      mkdir /out && cp "doxygen-${DOXYGEN_VERSION}/bin/doxygen" /out/doxygen
+
+##======================================================================================================================
+## THE IMAGE ITSELF
+##======================================================================================================================
+FROM toolchains AS final
+
+ARG EMSDK_VERSION
+
+## LINK THE PACKAGE BACK TO ITS SOURCES SO GHCR GRANTS THIS REPO WRITE ACCESS
+LABEL org.opencontainers.image.source="https://github.com/jfalcou/compilers"
 
 ## MAKE SAFE FOR GIT
 RUN    git config --global --add safe.directory /github/workspace
@@ -39,34 +99,17 @@ ENV PATH=/opt/wasm/emsdk:/opt/wasm/emsdk/upstream/emscripten:/opt/wasm/emsdk/nod
 
 ## EMSCRIPTEN CONFIG
 ENV EMSDK=/opt/wasm/emsdk
-ENV EMSDK_VERSION=5.0.5
+ENV EMSDK_VERSION=${EMSDK_VERSION}
 ENV EM_CONFIG=/opt/wasm/emsdk/.emscripten
 ENV EMSDK_NODE=/opt/wasm/emsdk/node/current/bin/node
 
-## SETUP OTHER TOOLS
-## Versions and checksums are pinned: a moved URL or a replaced tarball fails the build
-## instead of quietly installing something else.
-ARG DOXYGEN_VERSION=1.16.1
-ARG DOXYGEN_SHA256=a56f885d37e3aae08a99f638d17bbb381224c03a878d9e2dda4f9fa4baf1d8bd
-
-RUN   DOXYGEN_TAG=Release_$(echo "${DOXYGEN_VERSION}" | tr . _)                                                     &&  \
-      mkdir /opt/wasm && cd /opt/wasm                                                                               &&  \
-      git clone --depth 1 --branch "${EMSDK_VERSION}" https://github.com/emscripten-core/emsdk.git                  &&  \
-      cd emsdk                                                                                                      &&  \
-      ./emsdk install "${EMSDK_VERSION}" && ./emsdk activate "${EMSDK_VERSION}"                                     &&  \
-      ln -sfn "$(ls -d /opt/wasm/emsdk/node/*_64bit | head -1)" /opt/wasm/emsdk/node/current                        &&  \
-      mkdir /tmp/doxygen && cd /tmp/doxygen                                                                         &&  \
-      wget -q "https://github.com/doxygen/doxygen/releases/download/${DOXYGEN_TAG}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" &&  \
-      echo "${DOXYGEN_SHA256}  doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" | sha256sum -c -                        &&  \
-      tar xzf "doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz"                                                         &&  \
-      cp "doxygen-${DOXYGEN_VERSION}/bin/doxygen" /usr/local/bin/                                                   &&  \
-      cd / && rm -rf /tmp/doxygen
+## --link makes each of these a layer of its own: changing the package list above no longer rebuilds them.
+COPY --link --from=emsdk   /opt/wasm    /opt/wasm
+COPY --link --from=doxygen /out/doxygen /usr/local/bin/doxygen
 
 ## SMOKE TEST
-## Fails the build rather than shipping a toolchain that cannot run. The ENV above is applied
-## here, so a PATH pointing at a node that is not there stops the image on the spot.
-## gcovr is asserted, not just printed: only 7.x measures header coverage as TTS expects.
-## Each tool is run unpiped once: a piped head would swallow its exit status.
+## Fails the build rather than shipping a toolchain that cannot run. It is the only place that sees the assembled
+## image, so it stays here. Each tool is run unpiped once: a piped head would swallow its exit status.
 RUN   node --version                                                                                                &&  \
       emcc --version > /dev/null                                                                                    &&  \
       emcc --version | head -1                                                                                      &&  \
