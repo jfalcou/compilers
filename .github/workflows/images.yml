@@ -57,12 +57,21 @@ jobs:
           if [ "$EVENT" = "workflow_dispatch" ]; then
             images="[\"$PICKED\"]"
           else
-            # grep exits 1 on no match, which pipefail would turn into a failed step - yet a pull
-            # request touching only this workflow is a perfectly ordinary, empty selection.
-            images=$(git diff --name-only "$BASE" HEAD               \
-                     | { grep '/Dockerfile$' || true; }              \
-                     | cut -d/ -f1 | sort -u                         \
-                     | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+            # Only an image directory's own Dockerfile counts - previous/ holds archived recipes in
+            # subdirectories and builds nothing. grep exits 1 on no match, which pipefail would turn
+            # into a failed step, yet a pull request touching only this workflow is a perfectly
+            # ordinary empty selection.
+            touched=$(git diff --name-only "$BASE" HEAD              \
+                      | { grep -E '^[^/]+/Dockerfile$' || true; }    \
+                      | cut -d/ -f1 | sort -u)
+
+            # A Dockerfile the pull request deleted still shows up above, and its directory is gone.
+            kept=""
+            for dir in $touched; do
+              if [ -f "$dir/Dockerfile" ]; then kept="$kept$dir"$'\n'; fi
+            done
+
+            images=$(printf '%s' "$kept" | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
           fi
 
           echo "images=$images" >> "$GITHUB_OUTPUT"
