@@ -1,0 +1,16 @@
+##======================================================================================================================
+##  Multi-Arch C++ & WebAssembly Development Environment
+##======================================================================================================================
+## Keeps the action references in .github/workflows current. Everything lands in one grouped pull
+## request a week rather than one per action.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 3
