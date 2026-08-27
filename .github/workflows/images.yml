@@ -20,6 +20,11 @@ on:
         description: 'Tag to publish under, following the existing scheme (v11, sycl-v2, ...)'
         required: true
         type: string
+      refresh:
+        description: 'Ignore the layer cache and refetch everything - the only way to pick up new upstream packages'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: images-${{ github.ref }}-${{ inputs.image }}
@@ -105,9 +110,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      ##================================================================================================================
+      ## The runner is a fresh machine every time, so BuildKit's own cache is always empty and every build reinstalls
+      ## the toolchain from scratch. Keeping the layers in GHCR next to the image is what makes a pull request that
+      ## touches the smoke test cost seconds instead of five minutes.
+      ##
+      ## Reading it needs nothing; writing it needs the login above, so only a dispatch exports. And the cache keys on
+      ## the *text* of each instruction, not on what apt would install today - a cached rebuild faithfully reproduces
+      ## last month's packages, which is why refreshing them is a deliberate input rather than a side effect.
+      ##================================================================================================================
       - name: Build and Publish
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.image }}
           push: ${{ github.event_name == 'workflow_dispatch' }}
           tags: ghcr.io/${{ github.repository }}:${{ inputs.tag || format('{0}-dry-run', matrix.image) }}
+          no-cache: ${{ inputs.refresh == true }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:${{ matrix.image }}-buildcache
+          cache-to: ${{ github.event_name == 'workflow_dispatch' && format('type=registry,ref=ghcr.io/{0}:{1}-buildcache,mode=max', github.repository, matrix.image) || '' }}
