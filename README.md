@@ -9,7 +9,7 @@ This Docker image provides a high-performance, multi-architecture C++ developmen
 * **Modern Compilers:** Includes **GCC 14** and **Clang 19/20** with support for the latest C++ standards.
 * **WebAssembly (Wasm):** Pre-configured **Emscripten SDK (v5.0.5)**.
 * **Cross-Compilation:** Multi-arch support for `aarch64`, `armhf`, `powerpc64le`, and `riscv64`.
-* **Emulation & Analysis:** **QEMU** for cross-arch execution and **Intel SDE** for instruction set simulation.
+* **Emulation & Analysis:** **QEMU** for cross-arch execution.
 
 ### 🛠 Software Inventory & Versions
 
