@@ -15,7 +15,7 @@ on:
         description: 'Image to build'
         required: true
         type: choice
-        options: [basic, cuda, eve, sycl]
+        options: [basic, cuda, sycl]
       tag:
         description: 'Tag to publish under, following the existing scheme (v11, sycl-v2, ...)'
         required: true
