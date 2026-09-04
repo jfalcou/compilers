@@ -1,111 +1,99 @@
 # Multi-Arch C++ & WebAssembly Development Environment
 
-## Base Version
+The container images the CI of a family of C++ libraries runs in, published to
+`ghcr.io/jfalcou/compilers`. One directory per image, one tag per build.
 
-This Docker image provides a high-performance, multi-architecture C++ development and cross-compilation environment based on **Ubuntu Questing**.
+| Directory | Tag | Base | What it carries |
+|---|---|---|---|
+| `basic/` | `v10` | `ubuntu:questing` | GCC 14, Clang 19 to 21, the cross toolchains, Emscripten, QEMU, Doxygen |
+| `sycl/` | `sycl-v1` | `archlinux/archlinux` | Intel oneAPI DPC++, for `icpx` and SYCL |
+| `cuda/` | none in use | `nvcr.io/nvidia/cuda:12.3.1-devel-ubi8` | CUDA 12.3 with CMake and Ninja |
+| `previous/` | not built | | the recipes of `v6`, `v7`, `v9` and `v9b`, kept for reference |
 
-### 🚀 Key Features
+A tag is immutable: a new build takes the next one, and every consumer moves to it deliberately.
+The Nvidia jobs of the libraries run on a self-hosted machine with its own toolchain, so nothing
+pulls `cuda/` today.
 
-* **Modern Compilers:** Includes **GCC 14** and **Clang 19/20** with support for the latest C++ standards.
-* **WebAssembly (Wasm):** Pre-configured **Emscripten SDK (v5.0.5)**.
-* **Cross-Compilation:** Multi-arch support for `aarch64`, `armhf`, `powerpc64le`, and `riscv64`.
-* **Emulation & Analysis:** **QEMU** for cross-arch execution.
+## What `basic/` carries
 
-### 🛠 Software Inventory & Versions
+| Category | Tool | Version |
+|---|---|---|
+| C and C++ | GCC, G++ | 14, with multilib |
+| C and C++ | Clang | 19, 20 and 21; `clang` and `clang++` point at 19 |
+| Standard library | libc++ and libc++abi | 19, 20 and 21 |
+| Cross compilation | g++-14 | aarch64, armhf, riscv64, powerpc64, powerpc64le |
+| Emulation | QEMU user mode, with binfmt | from apt |
+| WebAssembly | Emscripten SDK | 5.0.5, pinned by tag |
+| Documentation | Doxygen | 1.16.1, downloaded and checked against its sha256 |
+| Coverage | gcovr | 7.x, pinned: 8 counts a header once per translation unit |
+| Coverage | lcov | from apt |
+| Build | CMake, Ninja, Make | from apt |
+| Debug | GDB, Valgrind | from apt |
+| Numerics | GMP, MPFR, MPFR C++ | from apt |
+| Parallel | OpenMPI | from apt |
+| Other | Boost headers, clang-format, lld, llvm, Python 3, git | from apt |
 
-#### Primary Toolchains
-| Category | Tool / Package | Version |
-| :--- | :--- | :--- |
-| **Wasm SDK** | Emscripten (EMSDK) | **5.0.5** |
-| **C Compilers** | GCC / G++ | 14 |
-| **C++ Compilers** | Clang / Clang++ | 19.x & 20.x |
-| **Build System** | CMake | Latest from apt |
-| **Build System** | Ninja | Latest from apt |
-| **Emulation** | QEMU | Latest from apt |
-| **Documentation** | Doxygen | 1.16.1 |
+Three things are pinned rather than taken from apt, and each is built in a stage of its own so a
+change to the package list does not rebuild them: the Emscripten SDK, cloned at its tag, Doxygen,
+whose archive is verified, and the gcovr version, which a smoke test refuses to see drift.
 
-### 📂 Environment Configuration
+The image ends on that smoke test: `node`, `emcc`, `gcovr` and the compilers are run once each, so a
+toolchain that cannot start fails the build instead of reaching a consumer.
 
-The container is initialized with these persistent environment variables:
+### Environment
 
 ```bash
 EMSDK="/opt/wasm/emsdk"
 EMSDK_VERSION="5.0.5"
 EM_CONFIG="/opt/wasm/emsdk/.emscripten"
-EMSDK_NODE="/opt/wasm/emsdk/node/22.16.0_64bit/bin/node"
-LD_LIBRARY_PATH="/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:..."
+EMSDK_NODE="/opt/wasm/emsdk/node/current/bin/node"
+LD_LIBRARY_PATH="/usr/aarch64-linux-gnu/lib64:/usr/aarch64-linux-gnu/lib:/usr/arm-linux-gnueabihf/lib:/usr/powerpc64le-linux-gnu/lib/"
 ```
 
-### 📦 Usage
+`node/current` is a version-free symlink: the SDK moving to another Node release leaves `EMSDK_NODE`
+valid. The dynamic loaders of the cross targets are symlinked into `/lib`, so a QEMU run finds them
+without being told where they are.
 
-#### Building the Image
+`/github/workspace` is declared a safe directory for git, which is what a checkout inside a container
+needs.
+
+## What `sycl/` carries
+
+Arch Linux, so the packages are whatever was current at build time: `intel-oneapi-dpcpp-cpp` and its
+runtime libraries, GCC, CMake, Ninja, Python, git. A job using it sources
+`/opt/intel/oneapi/setvars.sh` before calling `icpx`.
+
+## Building and publishing
+
+Publishing is manual, from the Actions tab: run **Container Images**, pick the image, and give the
+tag it goes out under, following the existing scheme (`v11`, `sycl-v2`). `refresh` ignores the layer
+cache, which is the only way to pick up new upstream packages, and costs the full build.
+
+A pull request builds only the images whose own `Dockerfile` it touched, under a `<image>-dry-run`
+tag, and never publishes anything else. Layers are cached in GHCR next to the image, so a pull
+request that changes one line does not rebuild a toolchain from scratch.
+
+Building one by hand is the same recipe:
+
 ```bash
-docker build -t cpp-dev-env:latest .
+docker build -t compilers:local basic/
+docker run -it --rm -v "$(pwd)":/workspace -w /workspace compilers:local
 ```
 
-#### Running the Container
-```bash
-docker run -it --rm -v $(pwd):/workspace -w /workspace cpp-dev-env:latest
+## Using an image
+
+A workflow names the image and the tag it wants:
+
+```yaml
+container:
+  image: ghcr.io/jfalcou/compilers:v10
 ```
 
-#### Git Integration
-The environment is pre-configured to handle GitHub Actions workspaces by setting `/github/workspace` as a safe directory.
+The libraries reach it through their platform matrices, where a row names the tag alone:
 
-
-## SYCL Version
-This Dockerfile provides a lightweight, cutting-edge development environment based on **Arch Linux**. It is specifically tailored for **Intel oneAPI** development, enabling Data Parallel C++ (DPC++) and SYCL applications.
-
-### 🚀 Key Features
-
-* **Rolling Release Base:** Built on `archlinux/archlinux` for the latest stable packages.
-* **Intel oneAPI Toolchain:** Includes the DPC++/C++ compiler and essential runtime libraries.
-* **Modern Build Suite:** Equipped with CMake, Ninja, and Python for complex build pipelines.
-* **Optimized Footprint:** Automated cleanup of `pacman` cache to keep image size minimal.
-
-### 🛠 Software Inventory & Versions
-
-Since this image is based on Arch Linux, packages generally reflect the **latest stable upstream versions** available at the time of the build.
-
-#### Primary Toolchains
-| Category | Tool / Package | Purpose |
-| :--- | :--- | :--- |
-| **Compiler** | `intel-oneapi-dpcpp-cpp` | Intel oneAPI DPC++/C++ Compiler (SYCL support) |
-| **Runtime** | `intel-oneapi-compiler-dpcpp-cpp-runtime-libs` | Essential libraries for executing oneAPI binaries |
-| **Base Compiler** | `gcc` | GNU Compiler Collection (System C/C++ support) |
-| **Build System** | `cmake` | Cross-platform build automation |
-| **Build System** | `ninja` | Small, high-speed build system |
-
-#### Installed Packages Manifest
-* **Development:** `intel-oneapi-dpcpp-cpp`, `intel-oneapi-compiler-dpcpp-cpp-runtime-libs`, `gcc`.
-* **Build Tools:** `cmake`, `ninja`, `git`.
-* **Scripting:** `python`.
-* **Utilities:** `nano` (text editor).
-
-### 📂 Configuration Details
-
-* **User:** Operates as `root` for administrative flexibility.
-* **Keyring:** `pacman-key --init` is executed during build to ensure secure package verification.
-* **Maintenance:** The image performs a full system upgrade (`-Syu`) during build to ensure all system dependencies are current.
-
-### 📦 Usage
-
-#### Building the Image
-```bash
-docker build -t arch-oneapi:latest .
+```yaml
+- { name: "gcc"  , preset: "gcc"  , image: "v10"      }
+- { name: "icpx" , preset: "icpx" , image: "sycl-v1"  }
 ```
 
-#### Running the Container
-To start an interactive session with access to your local source code:
-```bash
-docker run -it --rm -v $(pwd):/projects -w /projects arch-oneapi:latest
-```
-
-#### Verifying the Intel Compiler
-Once inside the container, you can verify the Intel environment:
-```bash
-icpx --version
-```
-
-### 📝 Notes
-* **Storage:** The `pacman` cache is cleared (`/var/cache/pacman/pkg/`) during the build process to maintain a slim image.
-* **Environment Variables:** Depending on your specific oneAPI workflow, you may need to source the Intel environment variables (e.g., `source /opt/intel/oneapi/setvars.sh`) if your application requires specific library paths at runtime.
+A new tag therefore means a pass over the consumers: nothing follows it on its own.
