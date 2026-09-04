@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -98,7 +98,7 @@ jobs:
 
     steps:
       - name: Fetch current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Reclaim Runner Disk Space
         shell: bash
