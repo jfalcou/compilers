@@ -24,7 +24,6 @@ RUN   apt-get update -y                                                         
 ## SMOKE TEST
 ## Fails the build rather than shipping a toolchain that cannot run. Each tool is run unpiped once: a piped head would
 ## return head's exit status and pass over a missing binary.
-RUN   mpicc  --showme:version > /dev/null                                                                           &&  \
-      mpicxx --showme:version > /dev/null                                                                           &&  \
-      mpirun --version        > /dev/null                                                                            &&  \
-      mpirun --version | head -1
+RUN   mpicc  --showme:version                                                                                       &&  \
+      mpicxx --showme:version                                                                                       &&  \
+      mpirun --version > /dev/null
