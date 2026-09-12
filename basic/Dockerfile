@@ -12,8 +12,16 @@ ARG DOXYGEN_SHA256=a56f885d37e3aae08a99f638d17bbb381224c03a878d9e2dda4f9fa4baf1d
 
 ##======================================================================================================================
 ## COMPILERS AND CROSS-TOOLCHAINS - the long pole, ~5 minutes
+##
+## One version per family, the newest the distribution packages. The gcc crosses also carry the target sysroots that
+## clang uses for arm and riscv, so all five stay even though only aarch64 and powerpc64 are driven by a gcc toolchain.
+## g++-15 still arrives underneath: build-essential requires the g++ metapackage, which is 15 on this release.
+##
+## Ubuntu ships the gcc 16 trunk snapshot unstripped: its aarch64 cc1plus is 341 MB against 37 MB for the released 14.
+## Stripping the debug sections is what makes that generation affordable, and it happens in this same RUN because a
+## later layer would delete nothing.
 ##======================================================================================================================
-FROM ubuntu:questing AS toolchains
+FROM ubuntu:resolute AS toolchains
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -22,28 +30,26 @@ RUN   apt-get update -y                                                         
       sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates                                        \
       less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov "gcovr=7.*"                            \
       python3                                                                                                       &&  \
-      apt-get install -y --no-install-recommends g++-14 gcc-14-multilib g++-14-multilib                                 \
-      g++-14-aarch64-linux-gnu g++-14-arm-linux-gnueabihf                                                               \
-      g++-14-riscv64-linux-gnu g++-14-powerpc64-linux-gnu  g++-14-powerpc64le-linux-gnu                             &&  \
+      apt-get install -y --no-install-recommends g++-16                                                                 \
+      g++-16-aarch64-linux-gnu g++-16-arm-linux-gnueabihf                                                               \
+      g++-16-riscv64-linux-gnu g++-16-powerpc64-linux-gnu  g++-16-powerpc64le-linux-gnu                             &&  \
       apt-get install -y --no-install-recommends libmpfrc++-dev libmpfr-dev libgmp-dev                              &&  \
-      apt-get install -y --no-install-recommends libc++-19-dev libc++abi-19-dev clang-19 clang-format lld llvm      &&  \
-      apt-get install -y --no-install-recommends libc++-20-dev libc++abi-20-dev clang-20                            &&  \
-      apt-get install -y --no-install-recommends libc++-21-dev libc++abi-21-dev clang-21                            &&  \
-      apt-get install -y --no-install-recommends libclang-rt-19-dev libclang-rt-20-dev libclang-rt-21-dev           &&  \
-      apt-get install -y --no-install-recommends libopenmpi-dev libopenmpi40                                            \
-      qemu-user qemu-user-binfmt libc6-arm64-cross libboost-dev                                                     &&  \
+      apt-get install -y --no-install-recommends libc++-22-dev libc++abi-22-dev clang-22                                \
+      libclang-rt-22-dev clang-format lld llvm                                                                      &&  \
+      apt-get install -y --no-install-recommends qemu-user qemu-user-binfmt libc6-arm64-cross libboost-dev          &&  \
       apt clean && rm -rf /var/lib/apt/lists/*                                                                      &&  \
+      find /usr/libexec/gcc /usr/libexec/gcc-cross -type f -exec strip --strip-debug {} +                           &&  \
       ln -sf /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1     /lib/ld-linux-aarch64.so.1                        &&  \
       ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3     /lib/ld-linux-armhf.so.3                          &&  \
       ln -sf /usr/powerpc64le-linux-gnu/lib64/ld64.so.2           /lib64/ld64.so.2                                  &&  \
       ln -sf /usr/powerpc64-linux-gnu/lib64/ld64.so.1             /lib64/ld64.so.1                                  &&  \
-      ln -s /usr/bin/clang++-19                                   /usr/bin/clang++                                  &&  \
-      ln -s /usr/bin/clang-19                                     /usr/bin/clang
+      ln -s /usr/bin/clang++-22                                   /usr/bin/clang++                                  &&  \
+      ln -s /usr/bin/clang-22                                     /usr/bin/clang
 
 ##======================================================================================================================
 ## EMSCRIPTEN SDK - built aside, only /opt/wasm reaches the final image
 ##======================================================================================================================
-FROM ubuntu:questing AS emsdk
+FROM ubuntu:resolute AS emsdk
 
 ARG EMSDK_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
@@ -63,7 +69,7 @@ RUN   mkdir /opt/wasm && cd /opt/wasm                                           
 ##======================================================================================================================
 ## DOXYGEN - a single binary, fetched by pinned version and verified before it is unpacked
 ##======================================================================================================================
-FROM ubuntu:questing AS doxygen
+FROM ubuntu:resolute AS doxygen
 
 ARG DOXYGEN_VERSION
 ARG DOXYGEN_SHA256
@@ -114,4 +120,8 @@ RUN   node --version                                                            
       emcc --version > /dev/null                                                                                    &&  \
       emcc --version | head -1                                                                                      &&  \
       gcovr --version | head -1                                                                                     &&  \
-      if ! gcovr --version | grep -q "^gcovr 7\."; then echo "FATAL: gcovr must be 7.x"; exit 1; fi
+      if ! gcovr --version | grep -q "^gcovr 7\."; then echo "FATAL: gcovr must be 7.x"; exit 1; fi                 &&  \
+      printf '#include <vector>\nint main(){ return std::vector<int>{1}.size() - 1; }\n' > /tmp/libcxx.cpp          &&  \
+      clang++-22 -std=c++20 -stdlib=libc++ /tmp/libcxx.cpp -o /tmp/libcxx                                            &&  \
+      g++-16 -std=c++23 /tmp/libcxx.cpp -o /tmp/libcxx                                                              &&  \
+      rm -f /tmp/libcxx.cpp /tmp/libcxx
