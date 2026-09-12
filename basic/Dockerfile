@@ -13,7 +13,7 @@ ARG DOXYGEN_SHA256=a56f885d37e3aae08a99f638d17bbb381224c03a878d9e2dda4f9fa4baf1d
 ##======================================================================================================================
 ## COMPILERS AND CROSS-TOOLCHAINS - the long pole, ~5 minutes
 ##
-## One version per family, the newest the distribution packages. The gcc crosses also carry the target sysroots that
+## One generation per family, the newest the distribution ships. The gcc crosses also carry the target sysroots that
 ## clang uses for arm and riscv, so all five stay even though only aarch64 and powerpc64 are driven by a gcc toolchain.
 ## g++-15 still arrives underneath: build-essential requires the g++ metapackage, which is 15 on this release.
 ##
