@@ -6,7 +6,7 @@ The container images the CI of a family of C++ libraries runs in, published to
 | Directory | Tag | Base | What it carries |
 |---|---|---|---|
 | `basic/` | `v11` | `ubuntu:resolute` | GCC 16, Clang 22, the cross toolchains, Emscripten, QEMU, Doxygen |
-| `mpi/` | `mpi-v1` | `ghcr.io/jfalcou/compilers` | the basic image plus OpenMPI |
+| `mpi/` | `mpi-v1` | `ghcr.io/jfalcou/compilers:v11` | the basic image plus OpenMPI |
 | `sycl/` | `sycl-v1` | `archlinux/archlinux` | Intel oneAPI DPC++, for `icpx` and SYCL |
 | `cuda/` | none in use | `nvcr.io/nvidia/cuda:12.3.1-devel-ubi8` | CUDA 12.3 with CMake and Ninja |
 | `previous/` | not built | | the recipes of `v6`, `v7`, `v9`, `v9b` and `v10`, kept for reference |

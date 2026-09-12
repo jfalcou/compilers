@@ -6,9 +6,8 @@
 ##======================================================================================================================
 # syntax=docker/dockerfile:1.7
 
-## The workflow passes no build-arg, so this default is the base that gets published. It moves to v11 in the same
-## commit that publishes v11, since a pull request cannot build against a tag that does not exist yet.
-ARG BASE_TAG=v10
+## The workflow passes no build-arg, so this default is the base that gets published.
+ARG BASE_TAG=v11
 
 FROM ghcr.io/jfalcou/compilers:${BASE_TAG}
 
