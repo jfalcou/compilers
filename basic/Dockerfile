@@ -29,7 +29,7 @@ RUN   apt-get update -y                                                         
       apt-get install -y --no-install-recommends                                                                        \
       sudo tzdata openssh-server curl wget libssl-dev libffi-dev ca-certificates                                        \
       less unzip tar build-essential ninja-build cmake git valgrind gdb nano lcov "gcovr=7.*"                            \
-      python3                                                                                                       &&  \
+      python3 linux-perf                                                                                            &&  \
       apt-get install -y --no-install-recommends g++-16                                                                 \
       g++-16-aarch64-linux-gnu g++-16-arm-linux-gnueabihf                                                               \
       g++-16-riscv64-linux-gnu g++-16-powerpc64-linux-gnu  g++-16-powerpc64le-linux-gnu                             &&  \
@@ -121,6 +121,7 @@ RUN   node --version                                                            
       emcc --version | head -1                                                                                      &&  \
       gcovr --version | head -1                                                                                     &&  \
       if ! gcovr --version | grep -q "^gcovr 7\."; then echo "FATAL: gcovr must be 7.x"; exit 1; fi                 &&  \
+      perf --version                                                                                                &&  \
       printf '#include <vector>\nint main(){ return std::vector<int>{1}.size() - 1; }\n' > /tmp/libcxx.cpp          &&  \
       clang++-22 -std=c++20 -stdlib=libc++ /tmp/libcxx.cpp -o /tmp/libcxx                                            &&  \
       g++-16 -std=c++23 /tmp/libcxx.cpp -o /tmp/libcxx                                                              &&  \
