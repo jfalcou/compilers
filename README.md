@@ -26,6 +26,7 @@ The container images the CI of a family of C++ libraries runs in, published to
 | Coverage | lcov | from apt |
 | Build | CMake, Ninja, Make | from apt |
 | Debug | GDB, Valgrind | from apt |
+| Profiling | perf | from apt, `linux-perf` |
 | Numerics | GMP, MPFR, MPFR C++ | from apt |
 | Other | Boost headers, clang-format, lld, llvm, Python 3, git | from apt |
 
